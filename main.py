@@ -1,5 +1,6 @@
 import tkinter as tk
 import block
+import block_generator
 
 INTERVAL_UNIT = 36
 GAMEBOARD_ROWS = 14
@@ -69,13 +70,7 @@ def draw_picker_grid(event=None):
 
 
 def draw_picker_blocks():
-    picker_blocks = [block.Block(0, [0, 3], [[0, 0]]),
-                     block.Block(1, [0, 7], [[0, 0], [0, 1]]),
-                     block.Block(2, [0, 12], [[0, 0], [0, 1], [1, 1]]),
-                     block.Block(3, [0, 17], [[0, 0], [0, 1], [0, 2]]),
-                     block.Block(4, [2, 0], [[0, 0], [0, 1], [1, 0], [1, 1]]),
-                     block.Block(5, [2, 4], [[0, 1], [1, 0], [1, 1], [1, 2]]),
-                     block.Block(6, [3, 9], [[0, 0], [0, 1], [0, 2], [0, 3]])]
+    picker_blocks = block_generator.generate_blocks()
     for current_block in picker_blocks:
         for coord in current_block.coordinates:
             picker_canvas.create_rectangle(
@@ -95,7 +90,7 @@ gameboard_canvas.pack(side="left")
 gameboard_canvas.bind("<Button-1>", on_canvas_click)
 gameboard_canvas.bind('<Configure>', draw_gameboard_grid)
 picker_canvas = tk.Canvas(root, width=PICKER_WIDTH - 4,
-                          height=PICKER_HEIGHT - 4, background='white')
+                          height=PICKER_HEIGHT - 4, background='black')
 picker_canvas.pack(side="right")
 picker_canvas.bind("<Configure>", configure_picker)
 
