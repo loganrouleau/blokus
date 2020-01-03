@@ -14,9 +14,11 @@ PICKER_HEIGHT = PICKER_ROWS * INTERVAL_UNIT
 PLAYERS = {0: "red", 1: "green"}
 
 current_player = 0
+selected_block = "-1"
 tiles = [[None for _ in range(GAMEBOARD_COLS)] for _ in range(GAMEBOARD_ROWS)]
 picker_tiles = [[None for _ in range(PICKER_COLS)]
                 for _ in range(PICKER_ROWS)]
+picker_blocks = block_generator.generate_blocks()
 
 
 def switch_player():
@@ -25,19 +27,32 @@ def switch_player():
         current_player = 1
     else:
         current_player = 0
+    global selected_block
+    selected_block = "-1"
 
 
 def on_canvas_click(event):
     col = int(event.x/INTERVAL_UNIT)
     row = int(event.y/INTERVAL_UNIT)
-    # If the tile is not filled, create a rectangle
-    if not tiles[row][col]:
-        tiles[row][col] = gameboard_canvas.create_rectangle(
-            col*INTERVAL_UNIT,
-            row*INTERVAL_UNIT,
-            (col+1)*INTERVAL_UNIT,
-            (row+1)*INTERVAL_UNIT, fill=PLAYERS[current_player])
+    global tiles
+    # TODO: Add validation/boundary checking here
+    if int(selected_block) > -1 and int(selected_block) < 21:
+        for coord in picker_blocks[int(selected_block)].coordinates:
+            tiles[row + coord[0]][col + coord[1]] = current_player
+        paint_gameboard()
         switch_player()
+
+
+def paint_gameboard():
+    for row in range(GAMEBOARD_ROWS):
+        for col in range(GAMEBOARD_COLS):
+            if tiles[row][col] == 0 or tiles[row][col] == 1:
+                gameboard_canvas.create_rectangle(
+                    (col)*INTERVAL_UNIT,
+                    (row)*INTERVAL_UNIT,
+                    (col + 1)*INTERVAL_UNIT,
+                    (row + 1)*INTERVAL_UNIT,
+                    fill=PLAYERS[int(tiles[row][col])])
 
 
 def draw_gameboard_grid(event=None):
@@ -64,7 +79,6 @@ def draw_picker_grid(event=None):
 
 
 def draw_picker_blocks():
-    picker_blocks = block_generator.generate_blocks()
     for current_block in picker_blocks:
         for coord in current_block.coordinates:
             picker_canvas.create_rectangle(
@@ -79,8 +93,8 @@ def on_block_selection(event=None):
     tags = picker_canvas.gettags("current")
     if not tags:
         return
-    item = tags[0]
-    print("selected item " + item)
+    global selected_block
+    selected_block = tags[0]
 
 
 root = tk.Tk()
