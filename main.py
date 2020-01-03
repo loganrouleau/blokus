@@ -43,10 +43,10 @@ def on_canvas_click(event):
 def draw_gameboard_grid(event=None):
     for i in range(0, GAMEBOARD_WIDTH, INTERVAL_UNIT):
         gameboard_canvas.create_line(
-            [(i, 0), (i, GAMEBOARD_HEIGHT)], tag='grid_line')
+            [(i, 0), (i, GAMEBOARD_HEIGHT)])
     for i in range(0, GAMEBOARD_HEIGHT, INTERVAL_UNIT):
         gameboard_canvas.create_line(
-            [(0, i), (GAMEBOARD_WIDTH, i)], tag='grid_line')
+            [(0, i), (GAMEBOARD_WIDTH, i)])
 
 
 def configure_picker(event=None):
@@ -55,18 +55,12 @@ def configure_picker(event=None):
 
 
 def draw_picker_grid(event=None):
-    w = picker_canvas.winfo_width()
-    h = picker_canvas.winfo_height()
-    print(PICKER_HEIGHT)
-    print(PICKER_WIDTH)
-    print(h)
-    print(w)
     for i in range(0,  PICKER_WIDTH, INTERVAL_UNIT):
         picker_canvas.create_line(
-            [(i, 0), (i, PICKER_HEIGHT)], tag='grid_line')
+            [(i, 0), (i, PICKER_HEIGHT)])
     for i in range(0, PICKER_HEIGHT, INTERVAL_UNIT):
         picker_canvas.create_line(
-            [(0, i), (PICKER_WIDTH, i)], tag='grid_line')
+            [(0, i), (PICKER_WIDTH, i)])
 
 
 def draw_picker_blocks():
@@ -78,7 +72,15 @@ def draw_picker_blocks():
                 (current_block.position[0] + coord[0])*INTERVAL_UNIT,
                 (current_block.position[1] + coord[1] + 1)*INTERVAL_UNIT,
                 (current_block.position[0] + coord[0] + 1)*INTERVAL_UNIT,
-                fill=PLAYERS[current_player])
+                fill=PLAYERS[current_player], tag=current_block.index)
+
+
+def on_block_selection(event=None):
+    tags = picker_canvas.gettags("current")
+    if not tags:
+        return
+    item = tags[0]
+    print("selected item " + item)
 
 
 root = tk.Tk()
@@ -92,6 +94,7 @@ gameboard_canvas.bind('<Configure>', draw_gameboard_grid)
 picker_canvas = tk.Canvas(root, width=PICKER_WIDTH - 4,
                           height=PICKER_HEIGHT - 4, background='black')
 picker_canvas.pack(side="right")
+picker_canvas.bind("<Button-1>", on_block_selection)
 picker_canvas.bind("<Configure>", configure_picker)
 
 root.mainloop()
