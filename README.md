@@ -8,4 +8,10 @@ This application requires Python 3 and Tkinter, which comes bundled with the Pyt
 
 ## Run the application
 
-<code>python main.py</code>
+<code>python src/blokus.py</code>
+
+## Run unit tests
+
+All tests: <code>python -m unittest discover test</code>
+
+Specific test class: <code>python -m unittest test.test_validator</code>
