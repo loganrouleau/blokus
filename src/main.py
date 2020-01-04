@@ -1,6 +1,7 @@
 import tkinter as tk
 import block
 import block_generator
+import validator
 
 INTERVAL_UNIT = 36
 GAMEBOARD_ROWS = 14
@@ -29,18 +30,24 @@ def switch_player():
         current_player = 0
     global selected_block
     selected_block = "-1"
+    for item in picker_canvas.find_withtag("all"):
+        picker_canvas.itemconfig(item, fill=PLAYERS[current_player])
 
 
 def on_canvas_click(event):
     col = int(event.x/INTERVAL_UNIT)
     row = int(event.y/INTERVAL_UNIT)
-    global tiles
-    # TODO: Add validation/boundary checking here
+
     if int(selected_block) > -1 and int(selected_block) < 21:
+        proposed_coordinates = []
         for coord in picker_blocks[int(selected_block)].coordinates:
-            tiles[row + coord[0]][col + coord[1]] = current_player
-        paint_gameboard()
-        switch_player()
+            proposed_coordinates.append([row + coord[0], col + coord[1]])
+        global tiles
+        if validator.placement_is_valid(tiles, proposed_coordinates, current_player):
+            for coord in proposed_coordinates:
+                tiles[coord[0]][coord[1]] = current_player
+            paint_gameboard()
+            switch_player()
 
 
 def paint_gameboard():
