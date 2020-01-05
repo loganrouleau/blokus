@@ -24,7 +24,8 @@ tiles = [[None for _ in range(BOARD_SIZE_CELLS)]
          for _ in range(BOARD_SIZE_CELLS)]
 picker_tiles = [[None for _ in range(PICKER_COLS)]
                 for _ in range(PICKER_ROWS)]
-picker_blocks = block_generator.generate_blocks()
+picker_blocks = {"red": block_generator.generate_blocks(
+), "green": block_generator.generate_blocks()}
 
 move_flag = False
 mouse_xpos = -1
@@ -43,21 +44,6 @@ def switch_player():
         canvas.itemconfig(item, fill=PLAYERS[current_player])
 
 
-def on_canvas_click(event):
-    col = int(event.x/CELL_SIZE_PX)
-    row = int(event.y/CELL_SIZE_PX)
-
-    proposed_coordinates = []
-    for coord in picker_blocks[int(selected_block.split("_")[1])].coordinates:
-        proposed_coordinates.append([row + coord[0], col + coord[1]])
-    global tiles
-    if validator.placement_is_valid(tiles, proposed_coordinates, current_player):
-        for coord in proposed_coordinates:
-            tiles[coord[0]][coord[1]] = current_player
-        paint_board()
-        switch_player()
-
-
 def paint_board():
     for row in range(BOARD_SIZE_CELLS):
         for col in range(BOARD_SIZE_CELLS):
@@ -72,7 +58,7 @@ def paint_board():
 
 def configure_canvas(event=None):
     draw_board_grid()
-    draw_picker_blocks()
+    draw_picker_blocks(current_player)
 
 
 def draw_board_grid():
@@ -84,8 +70,8 @@ def draw_board_grid():
             [(0, i), (BOARD_SIZE_PX, i)])
 
 
-def draw_picker_blocks():
-    for current_block in picker_blocks:
+def draw_picker_blocks(player):
+    for current_block in picker_blocks[PLAYERS[player]]:
         for coord in current_block.coordinates:
             canvas.create_rectangle(
                 PICKER_WIDTH_OFFSET_PX + (
@@ -96,7 +82,7 @@ def draw_picker_blocks():
                     current_block.position[1] + coord[1] + 1)*CELL_SIZE_PX,
                 PICKER_HEIGHT_OFFSET_PX + (
                     current_block.position[0] + coord[0] + 1)*CELL_SIZE_PX,
-                fill=PLAYERS[current_player], tags=("block_" + str(current_block.index), "picker"))
+                fill=PLAYERS[current_player], tags=(PLAYERS[player] + "_block_" + str(current_block.index), "picker"))
 
 
 def on_block_selection(event=None):
@@ -107,7 +93,7 @@ def on_block_selection(event=None):
     selected_block = tags[0]
 
 
-def move(event):
+def on_move(event):
     global move_flag
     global mouse_xpos
     global mouse_ypos
@@ -126,9 +112,23 @@ def move(event):
         mouse_ypos = event.y
 
 
-def release(event):
+def on_release(event):
     global move_flag
     move_flag = False
+    col = int(event.x/CELL_SIZE_PX)
+    row = int(event.y/CELL_SIZE_PX)
+
+    proposed_coordinates = []
+    for coord in picker_blocks[PLAYERS[current_player]][int(selected_block.split("_")[2])].coordinates:
+        proposed_coordinates.append([row + coord[0], col + coord[1]])
+    global tiles
+    # if validator.placement_is_valid(tiles, proposed_coordinates, current_player):
+    for coord in proposed_coordinates:
+        tiles[coord[0]][coord[1]] = current_player
+    for item in canvas.find_withtag(selected_block):
+        canvas.delete(item)
+    paint_board()
+    switch_player()
 
 
 root = tk.Tk()
@@ -138,10 +138,10 @@ canvas = tk.Canvas(root, width=CANVAS_WIDTH_PX - 4,
                    height=CANVAS_HEIGHT_PX - 4)
 canvas.pack()
 
-canvas.bind("<Button-1>", on_block_selection)
-canvas.bind("<Button-3>", on_canvas_click)
 canvas.bind("<Configure>", configure_canvas)
-canvas.tag_bind("picker", '<Button1-Motion>', move)
-canvas.tag_bind("picker", '<ButtonRelease-1>', release)
+canvas.bind("<Button-1>", on_block_selection)
+# canvas.bind("<Button-3>", on_canvas_click) Todo: bind to rotate?
+canvas.tag_bind("picker", '<Button1-Motion>', on_move)
+canvas.tag_bind("picker", '<ButtonRelease-1>', on_release)
 
 root.mainloop()
