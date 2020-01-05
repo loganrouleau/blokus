@@ -47,16 +47,15 @@ def on_canvas_click(event):
     col = int(event.x/CELL_SIZE_PX)
     row = int(event.y/CELL_SIZE_PX)
 
-    if int(selected_block) > -1 and int(selected_block) < len(picker_blocks):
-        proposed_coordinates = []
-        for coord in picker_blocks[int(selected_block)].coordinates:
-            proposed_coordinates.append([row + coord[0], col + coord[1]])
-        global tiles
-        if validator.placement_is_valid(tiles, proposed_coordinates, current_player):
-            for coord in proposed_coordinates:
-                tiles[coord[0]][coord[1]] = current_player
-            paint_board()
-            switch_player()
+    proposed_coordinates = []
+    for coord in picker_blocks[int(selected_block.split("_")[1])].coordinates:
+        proposed_coordinates.append([row + coord[0], col + coord[1]])
+    global tiles
+    if validator.placement_is_valid(tiles, proposed_coordinates, current_player):
+        for coord in proposed_coordinates:
+            tiles[coord[0]][coord[1]] = current_player
+        paint_board()
+        switch_player()
 
 
 def paint_board():
@@ -97,7 +96,7 @@ def draw_picker_blocks():
                     current_block.position[1] + coord[1] + 1)*CELL_SIZE_PX,
                 PICKER_HEIGHT_OFFSET_PX + (
                     current_block.position[0] + coord[0] + 1)*CELL_SIZE_PX,
-                fill=PLAYERS[current_player], tags=(current_block.index, "picker"))
+                fill=PLAYERS[current_player], tags=("block_" + str(current_block.index), "picker"))
 
 
 def on_block_selection(event=None):
@@ -107,28 +106,25 @@ def on_block_selection(event=None):
     global selected_block
     selected_block = tags[0]
 
-    # Move the block from picker to game board
 
-    # selected_block_obj = picker_blocks[int(selected_block)]           
-    
-         
 def move(event):
     global move_flag
     global mouse_xpos
     global mouse_ypos
-    global selected_block_obj
+    global selected_block
     if move_flag:
         new_xpos, new_ypos = event.x, event.y
-            
-        canvas.move(selected_block_obj, new_xpos-mouse_xpos, new_ypos-mouse_ypos)
-            
+        for item in canvas.find_withtag(selected_block):
+            canvas.move(item, new_xpos -
+                        mouse_xpos, new_ypos-mouse_ypos)
         mouse_xpos = new_xpos
         mouse_ypos = new_ypos
     else:
         move_flag = True
-        canvas.tag_raise(selected_block_obj)
+        canvas.tag_raise(selected_block)
         mouse_xpos = event.x
         mouse_ypos = event.y
+
 
 def release(event):
     global move_flag
@@ -141,17 +137,11 @@ root.resizable(False, False)
 canvas = tk.Canvas(root, width=CANVAS_WIDTH_PX - 4,
                    height=CANVAS_HEIGHT_PX - 4)
 canvas.pack()
+
 canvas.bind("<Button-1>", on_block_selection)
 canvas.bind("<Button-3>", on_canvas_click)
 canvas.bind("<Configure>", configure_canvas)
-
-IMAGE_PATH = "images/"
-tk_image = tk.PhotoImage(
-        file="{}{}".format(IMAGE_PATH, "images.png"))
-selected_block_obj= canvas.create_image(
-    0, 0, image=tk_image)
-
-canvas.tag_bind(selected_block_obj, '<Button1-Motion>', move)
-canvas.tag_bind(selected_block_obj, '<ButtonRelease-1>', release)
+canvas.tag_bind("picker", '<Button1-Motion>', move)
+canvas.tag_bind("picker", '<ButtonRelease-1>', release)
 
 root.mainloop()
