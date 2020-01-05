@@ -26,6 +26,10 @@ picker_tiles = [[None for _ in range(PICKER_COLS)]
                 for _ in range(PICKER_ROWS)]
 picker_blocks = block_generator.generate_blocks()
 
+move_flag = False
+mouse_xpos = -1
+mouse_ypos = -1
+
 
 def switch_player():
     global current_player
@@ -103,6 +107,33 @@ def on_block_selection(event=None):
     global selected_block
     selected_block = tags[0]
 
+    # Move the block from picker to game board
+
+    # selected_block_obj = picker_blocks[int(selected_block)]           
+    
+         
+def move(event):
+    global move_flag
+    global mouse_xpos
+    global mouse_ypos
+    global selected_block_obj
+    if move_flag:
+        new_xpos, new_ypos = event.x, event.y
+            
+        canvas.move(selected_block_obj, new_xpos-mouse_xpos, new_ypos-mouse_ypos)
+            
+        mouse_xpos = new_xpos
+        mouse_ypos = new_ypos
+    else:
+        move_flag = True
+        canvas.tag_raise(selected_block_obj)
+        mouse_xpos = event.x
+        mouse_ypos = event.y
+
+def release(event):
+    global move_flag
+    move_flag = False
+
 
 root = tk.Tk()
 root.title("Blokus Duo")
@@ -113,5 +144,14 @@ canvas.pack()
 canvas.bind("<Button-1>", on_block_selection)
 canvas.bind("<Button-3>", on_canvas_click)
 canvas.bind("<Configure>", configure_canvas)
+
+IMAGE_PATH = "images/"
+tk_image = tk.PhotoImage(
+        file="{}{}".format(IMAGE_PATH, "images.png"))
+selected_block_obj= canvas.create_image(
+    0, 0, image=tk_image)
+
+canvas.tag_bind(selected_block_obj, '<Button1-Motion>', move)
+canvas.tag_bind(selected_block_obj, '<ButtonRelease-1>', release)
 
 root.mainloop()
