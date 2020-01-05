@@ -6,7 +6,7 @@ import validator
 CELL_SIZE_PX = 36
 BOARD_SIZE_CELLS = 14
 BOARD_SIZE_PX = BOARD_SIZE_CELLS * CELL_SIZE_PX
-DIVIDER_WIDTH_PX = 9
+DIVIDER_WIDTH_PX = 36
 PICKER_HEIGHT_OFFSET_PX = 2 * CELL_SIZE_PX
 PICKER_WIDTH_OFFSET_PX = BOARD_SIZE_PX + DIVIDER_WIDTH_PX
 PICKER_ROWS = 12
@@ -69,32 +69,16 @@ def paint_board():
 
 def configure_canvas(event=None):
     draw_board_grid()
-    draw_picker_grid()
-    draw_divider()
     draw_picker_blocks()
 
 
 def draw_board_grid():
-    for i in range(0, BOARD_SIZE_PX, CELL_SIZE_PX):
+    for i in range(0, BOARD_SIZE_PX + 1, CELL_SIZE_PX):
         canvas.create_line(
             [(i, 0), (i, BOARD_SIZE_PX)])
     for i in range(0, BOARD_SIZE_PX, CELL_SIZE_PX):
         canvas.create_line(
             [(0, i), (BOARD_SIZE_PX, i)])
-
-
-def draw_picker_grid():
-    for i in range(PICKER_WIDTH_OFFSET_PX,  PICKER_WIDTH_OFFSET_PX + PICKER_WIDTH_PX, CELL_SIZE_PX):
-        canvas.create_line(
-            [(i, PICKER_HEIGHT_OFFSET_PX), (i, PICKER_HEIGHT_OFFSET_PX + PICKER_HEIGHT_PX)])
-    for i in range(PICKER_HEIGHT_OFFSET_PX, PICKER_HEIGHT_OFFSET_PX + PICKER_HEIGHT_PX, CELL_SIZE_PX):
-        canvas.create_line(
-            [(PICKER_WIDTH_OFFSET_PX, i), (PICKER_WIDTH_OFFSET_PX + PICKER_WIDTH_PX, i)])
-
-
-def draw_divider():
-    canvas.create_rectangle(
-        BOARD_SIZE_PX, 0, BOARD_SIZE_PX + DIVIDER_WIDTH_PX, BOARD_SIZE_PX, fill="gray")
 
 
 def draw_picker_blocks():
