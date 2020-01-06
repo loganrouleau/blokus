@@ -8,18 +8,18 @@ def placement_is_valid(state, proposed_coordinates, player):
             return False
         if not __square_has_player(state, coord, None):
             return False
-        immediate_neighbours = [[coord[0]-1, coord[1]], 
-                            [coord[0]+1, coord[1]], 
-                            [coord[0], coord[1]-1], 
-                            [coord[0], coord[1]+1]]
+        immediate_neighbours = [[coord[0]-1, coord[1]],
+                                [coord[0]+1, coord[1]],
+                                [coord[0], coord[1]-1],
+                                [coord[0], coord[1]+1]]
         for immediate_neighbour in immediate_neighbours:
             if __square_is_within_gameboard(state, immediate_neighbour) and not immediate_neighbour in proposed_coordinates:
                 if __square_has_player(state, immediate_neighbour, player):
                     return False
-        diagonal_neighbours = [[coord[0]+1, coord[1]+1], 
-                          [coord[0]+1, coord[1]-1], 
-                          [coord[0]-1, coord[1]+1], 
-                          [coord[0]-1, coord[1]-1]]
+        diagonal_neighbours = [[coord[0]+1, coord[1]+1],
+                               [coord[0]+1, coord[1]-1],
+                               [coord[0]-1, coord[1]+1],
+                               [coord[0]-1, coord[1]-1]]
         is_block_connected = False
         for diagonal_neighbour in diagonal_neighbours:
             if __square_is_within_gameboard(state, diagonal_neighbour) and not diagonal_neighbour in proposed_coordinates and not diagonal_neighbour in immediate_neighbours:
@@ -31,7 +31,7 @@ def placement_is_valid(state, proposed_coordinates, player):
                     is_block_connected = True
         if not is_block_connected and successful_validations > 2:
             return False
-    successful_validations = successful_validations + 1
+    successful_validations += 1
     return True
 
 

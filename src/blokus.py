@@ -21,6 +21,7 @@ PLAYERS = {0: "red", 1: "green"}
 
 current_player = 0
 selected_block = "-1"
+selected_block_segment = "-1"
 tiles = [[None for _ in range(BOARD_SIZE_CELLS)]
          for _ in range(BOARD_SIZE_CELLS)]
 picker_tiles = [[None for _ in range(PICKER_COLS)]
@@ -70,6 +71,7 @@ def draw_picker_blocks():
     height_offset = PICKER_HEIGHT_OFFSET_PX
     for player in PLAYERS:
         for current_block in picker_blocks[PLAYERS[player]]:
+            block_segment = 0
             for coord in current_block.coordinates:
                 canvas.create_rectangle(
                     PICKER_WIDTH_OFFSET_PX + (
@@ -80,7 +82,8 @@ def draw_picker_blocks():
                         current_block.position[1] + coord[1] + 1)*PICKER_CELL_SIZE_PX,
                     height_offset + (
                         current_block.position[0] + coord[0] + 1)*PICKER_CELL_SIZE_PX,
-                    fill=PLAYERS[player], tags=(PLAYERS[player] + "_block_" + str(current_block.index), "picker"))
+                    fill=PLAYERS[player], tags=(PLAYERS[player] + "_block_" + str(current_block.index), "block_segment_" + str(block_segment), "picker"))
+                block_segment += 1
         height_offset += PICKER_HEIGHT_PX
 
 
@@ -88,10 +91,12 @@ def on_block_selection(event):
     tags = canvas.gettags("current")
     if not tags or not tags[0].split("_")[0] == PLAYERS[current_player]:
         return
-    global selected_block
+    global selected_block, selected_block_segment
     selected_block = tags[0]
-    for item in canvas.find_withtag(selected_block):
-        canvas.scale(item, event.x, event.y, 2, 2)
+    selected_block_segment = tags[1]
+    if event.x > BOARD_SIZE_PX + DIVIDER_WIDTH_PX:
+        for item in canvas.find_withtag(selected_block):
+            canvas.scale(item, event.x, event.y, 2, 2)
 
 
 def on_move(event):
@@ -123,8 +128,11 @@ def on_release(event):
     row = int(event.y/CELL_SIZE_PX)
 
     proposed_coordinates = []
+    offset = picker_blocks[PLAYERS[current_player]][int(selected_block.split(
+        "_")[2])].coordinates[int(selected_block_segment.split("_")[2])]
     for coord in picker_blocks[PLAYERS[current_player]][int(selected_block.split("_")[2])].coordinates:
-        proposed_coordinates.append([row + coord[0], col + coord[1]])
+        proposed_coordinates.append(
+            [row + coord[0] - offset[0], col + coord[1] - offset[1]])
     global tiles
     if validator.placement_is_valid(tiles, proposed_coordinates, current_player):
         for coord in proposed_coordinates:
