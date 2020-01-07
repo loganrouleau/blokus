@@ -1,38 +1,44 @@
-successful_validations = 0
+is_starting_block_for_player = {0: True, 1: True}
 
 
 def placement_is_valid(state, proposed_coordinates, player):
-    global successful_validations
+    all_immediate_neighbours = []
     for coord in proposed_coordinates:
-        if not __square_is_within_gameboard(state, coord):
+        if not __square_is_within_gameboard(state, coord) or not __square_has_player(state, coord, None):
             return False
-        if not __square_has_player(state, coord, None):
-            return False
-        immediate_neighbours = [[coord[0]-1, coord[1]],
-                                [coord[0]+1, coord[1]],
-                                [coord[0], coord[1]-1],
-                                [coord[0], coord[1]+1]]
-        for immediate_neighbour in immediate_neighbours:
+        for immediate_neighbour in __get_immediate_neighbours(coord):
             if __square_is_within_gameboard(state, immediate_neighbour) and not immediate_neighbour in proposed_coordinates:
                 if __square_has_player(state, immediate_neighbour, player):
                     return False
-        diagonal_neighbours = [[coord[0]+1, coord[1]+1],
-                               [coord[0]+1, coord[1]-1],
-                               [coord[0]-1, coord[1]+1],
-                               [coord[0]-1, coord[1]-1]]
-        is_block_connected = False
-        for diagonal_neighbour in diagonal_neighbours:
-            if __square_is_within_gameboard(state, diagonal_neighbour) and not diagonal_neighbour in proposed_coordinates and not diagonal_neighbour in immediate_neighbours:
-                # Todo: add this into a second loop: and not diagonal_neighbour in immediate_neighbours:
-                # other_player = 0 if player == 1 else 1
-                # if __square_has_player(state, diagonal_neighbour, other_player):
-                #     return False
-                if __square_has_player(state, diagonal_neighbour, player):
-                    is_block_connected = True
-        if not is_block_connected and successful_validations > 2:
-            return False
-    successful_validations += 1
+                all_immediate_neighbours.append(immediate_neighbour)
+    global is_starting_block_for_player
+    if not is_starting_block_for_player[player] and not __is_block_connected(state, proposed_coordinates, player, all_immediate_neighbours):
+        return False
+    is_starting_block_for_player[player] = False
     return True
+
+
+def __is_block_connected(state, proposed_coordinates, player, all_immediate_neighbours):
+    for coord in proposed_coordinates:
+        for diagonal_neighbour in __get_diagonal_neighbours(coord):
+            if __square_is_within_gameboard(state, diagonal_neighbour) and not diagonal_neighbour in proposed_coordinates and not diagonal_neighbour in all_immediate_neighbours:
+                if __square_has_player(state, diagonal_neighbour, player):
+                    return True
+    return False
+
+
+def __get_immediate_neighbours(square):
+    return [[square[0]-1, square[1]],
+            [square[0]+1, square[1]],
+            [square[0], square[1]-1],
+            [square[0], square[1]+1]]
+
+
+def __get_diagonal_neighbours(square):
+    return [[square[0]+1, square[1]+1],
+            [square[0]+1, square[1]-1],
+            [square[0]-1, square[1]+1],
+            [square[0]-1, square[1]-1]]
 
 
 def __square_is_within_gameboard(state, square):

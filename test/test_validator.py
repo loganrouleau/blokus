@@ -24,7 +24,7 @@ class TestValidator(unittest.TestCase):
             gameboard, proposed_coordinates, player))
 
     def test_out_of_bounds(self):
-        proposed_coordinates = [[-1, 0]]
+        proposed_coordinates = [[1, 3], [1, 4]]
         player = 0
         self.assertFalse(validator.placement_is_valid(
             gameboard, proposed_coordinates, player))
@@ -39,29 +39,14 @@ class TestValidator(unittest.TestCase):
             gameboard, proposed_coordinates, player))
 
     def test_adjacent_squares_are_taken(self):
-        proposed_coordinates = [[0, 1], [0, 2], [0, 3]]
+        proposed_coordinates = [[1, 1], [1, 2], [1, 3]]
         player = 0
-        self.assertFalse(validator.placement_is_valid(
-            gameboard, proposed_coordinates, player))
-        proposed_coordinates = [[3, 1]]
-        player = 1
-
-    def test_corner_squares_invalid(self):
-        proposed_coordinates = [[1, 1]]
-        player = 0
-        self.assertFalse(validator.placement_is_valid(
-            gameboard, proposed_coordinates, player))
-        proposed_coordinates = [[1, 3], [2, 3]]
-        player = 1
         self.assertFalse(validator.placement_is_valid(
             gameboard, proposed_coordinates, player))
 
     def test_at_least_one_corner_connected(self):
         proposed_coordinates = [[2, 2], [2, 3], [3, 3]]
         player = 0
-        self.assertFalse(validator.placement_is_valid(
-            gameboard, proposed_coordinates, player))
-        proposed_coordinates = [[0, 0], [0, 1]]
         self.assertFalse(validator.placement_is_valid(
             gameboard, proposed_coordinates, player))
 
