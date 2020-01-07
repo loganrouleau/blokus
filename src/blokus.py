@@ -104,11 +104,18 @@ def on_move(event):
     if move_flag:
         new_xpos, new_ypos = event.x, event.y
         for item in canvas.find_withtag(selected_block):
-            if new_xpos < 0: 
+            if new_xpos <= 0 or new_xpos >= CANVAS_WIDTH_PX - PICKER_CELL_SIZE_PX or new_ypos <= 0 or new_ypos >= CANVAS_HEIGHT_PX: 
+                if new_xpos <= 0: 
+                    mouse_xpos = DIVIDER_WIDTH_PX/2
+                if new_ypos <= 0: 
+                    mouse_ypos = DIVIDER_WIDTH_PX/2
+                if new_xpos >= CANVAS_WIDTH_PX: 
+                    mouse_xpos = CANVAS_WIDTH_PX - PICKER_CELL_SIZE_PX * 4
+                if new_ypos >= CANVAS_HEIGHT_PX: 
+                    mouse_ypos = CANVAS_HEIGHT_PX - DIVIDER_WIDTH_PX
                 return
-            if new_xpos > CANVAS_WIDTH_PX:
-                return      
-            if new_xpos > 0 and new_ypos > 0 and new_xpos < CANVAS_WIDTH_PX and new_ypos < CANVAS_HEIGHT_PX: 
+                  
+            if new_xpos > 0 and new_ypos > 0 and new_xpos < CANVAS_WIDTH_PX - PICKER_CELL_SIZE_PX and new_ypos < CANVAS_HEIGHT_PX: 
                 canvas.move(item, new_xpos-mouse_xpos, new_ypos-mouse_ypos)
             
         mouse_xpos = new_xpos
@@ -123,15 +130,14 @@ def on_move(event):
 def on_release(event):
     if selected_block == "-1":
         return
-    if event.x > BOARD_SIZE_PX + DIVIDER_WIDTH_PX: 
+    if mouse_xpos > BOARD_SIZE_PX + DIVIDER_WIDTH_PX: # replace event.x with mouse_xpos
         for item in canvas.find_withtag(selected_block):
-            # todo: # check if the block will be placed out of bound: event.x < CANVAS_WIDTH_PX
-            canvas.scale(item, event.x, event.y, 0.5, 0.5)
+            canvas.scale(item, mouse_xpos, mouse_ypos, 0.5, 0.5) # replace event.x with mouse_xpos
 
     global move_flag
     move_flag = False
-    col = int(event.x/CELL_SIZE_PX)
-    row = int(event.y/CELL_SIZE_PX)
+    col = int(mouse_xpos/CELL_SIZE_PX) # replace event.x with mouse_xpos
+    row = int(mouse_ypos/CELL_SIZE_PX)
 
     proposed_coordinates = []
     offset = picker_blocks[PLAYERS[current_player]][int(selected_block.split(
