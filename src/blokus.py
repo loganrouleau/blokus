@@ -104,8 +104,13 @@ def on_move(event):
     if move_flag:
         new_xpos, new_ypos = event.x, event.y
         for item in canvas.find_withtag(selected_block):
-            canvas.move(item, new_xpos -
-                        mouse_xpos, new_ypos-mouse_ypos)
+            if new_xpos < 0: 
+                return
+            if new_xpos > CANVAS_WIDTH_PX:
+                return      
+            if new_xpos > 0 and new_ypos > 0 and new_xpos < CANVAS_WIDTH_PX and new_ypos < CANVAS_HEIGHT_PX: 
+                canvas.move(item, new_xpos-mouse_xpos, new_ypos-mouse_ypos)
+            
         mouse_xpos = new_xpos
         mouse_ypos = new_ypos
     else:
@@ -118,8 +123,9 @@ def on_move(event):
 def on_release(event):
     if selected_block == "-1":
         return
-    if event.x > BOARD_SIZE_PX + DIVIDER_WIDTH_PX:
+    if event.x > BOARD_SIZE_PX + DIVIDER_WIDTH_PX: 
         for item in canvas.find_withtag(selected_block):
+            # todo: # check if the block will be placed out of bound: event.x < CANVAS_WIDTH_PX
             canvas.scale(item, event.x, event.y, 0.5, 0.5)
 
     global move_flag
