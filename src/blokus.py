@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import W, NW
 import block
 import block_generator
 import validator
@@ -33,12 +34,26 @@ move_flag = False
 mouse_xpos = -1
 mouse_ypos = -1
 
+white_flag = {0: False, 1: False}
+
 
 def switch_player():
-    global current_player
-    current_player = 1 if current_player == 0 else 0
     global selected_block
     selected_block = "-1"
+
+    global current_player    
+    if white_flag[0] and white_flag[1]:
+        current_player = None # end of the game
+        return     
+    if not white_flag[0] and not white_flag[1]:
+        current_player = 1 if current_player == 0 else 0  
+        return
+    if not white_flag[0] and white_flag[1]:
+        current_player = 0
+        return
+    if not white_flag[1] and white_flag[0]:
+        current_player = 1 
+        return
 
 
 def paint_board():
@@ -155,6 +170,14 @@ def on_release(event):
         switch_player()
 
 
+def on_resign():
+    global white_flag
+    white_flag[current_player] = True
+    print(current_player)
+    switch_player()
+    print(current_player)
+
+
 root = tk.Tk()
 root.title("Blokus Duo")
 root.resizable(False, False)
@@ -168,4 +191,7 @@ canvas.bind("<Button-1>", on_block_selection)
 canvas.tag_bind("picker", '<Button1-Motion>', on_move)
 canvas.tag_bind("picker", '<ButtonRelease-1>', on_release)
 
+resign_button = tk.Button(root, text='White Flag', command=on_resign, anchor=W)
+resign_button.configure(width = 8, activebackground = "#33B5E5")
+canvas.create_window(CANVAS_WIDTH_PX - 100, 10, anchor=NW, window=resign_button)
 root.mainloop()
