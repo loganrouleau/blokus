@@ -107,7 +107,9 @@ def on_block_selection(event):
     tags = canvas.gettags("current")
     if not tags or not tags[0].split("_")[0] == PLAYERS[current_player]:
         return
-    global selected_block, selected_block_segment
+    global selected_block, selected_block_segment, mouse_xpos, mouse_ypos
+    mouse_xpos = event.x
+    mouse_ypos = event.y
     selected_block = tags[0]
     selected_block_segment = tags[1]
     if event.x > BOARD_SIZE_PX + DIVIDER_WIDTH_PX:
