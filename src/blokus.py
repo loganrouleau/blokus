@@ -45,6 +45,12 @@ def switch_player():
     global current_player
     if white_flag[0] and white_flag[1]:
         current_player = None  # end of the game
+        resign_button['state']='disabled'
+        # resign_button['text']='Restart'
+        win_team = PLAYERS[0] if score[0] > score[1] else PLAYERS[1]
+        canvas.itemconfig(end_game_label, text="GG! Player " + win_team + " has won!")
+        if score[0] == score[1]:
+           canvas.itemconfig(end_game_label, text="GG! It's a tie!") 
         return
     if not white_flag[0] and not white_flag[1]:
         current_player = 1 if current_player == 0 else 0
@@ -105,6 +111,8 @@ def draw_picker_blocks():
 
 def on_block_selection(event):
     tags = canvas.gettags("current")
+    if current_player == None:
+        return
     if not tags or not tags[0].split("_")[0] == PLAYERS[current_player]:
         return
     global selected_block, selected_block_segment, mouse_xpos, mouse_ypos
@@ -208,8 +216,12 @@ red_score_label = canvas.create_text(
     600, 20, font="Times 16", text="Red Score: " + str(score[0]))
 green_score_label = canvas.create_text(
     750, 20, font="Times 16", text="Green Score: " + str(score[1]))
-resign_button = tk.Button(root, text='White Flag', command=on_resign, anchor=W)
+
+end_game_label = canvas.create_text(
+    700, 50, font="Times 16", text="")
+
+resign_button = tk.Button(canvas, text='White Flag', command=on_resign, anchor=W)
 resign_button.configure(width=8, activebackground="#33B5E5", font="Times 12")
-canvas.create_window(CANVAS_WIDTH_PX - 100, 10,
+canvas.create_window(CANVAS_WIDTH_PX - 100, 5,
                      anchor=NW, window=resign_button)
 root.mainloop()
