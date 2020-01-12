@@ -3,6 +3,7 @@ from tkinter import W, NW
 import block
 import block_generator
 import validator
+import transformer
 
 CELL_SIZE_PX = 36
 BOARD_SIZE_CELLS = 14
@@ -45,12 +46,13 @@ def switch_player():
     global current_player
     if white_flag[0] and white_flag[1]:
         current_player = None  # end of the game
-        resign_button['state']='disabled'
+        resign_button['state'] = 'disabled'
         # resign_button['text']='Restart'
         win_team = PLAYERS[0] if score[0] > score[1] else PLAYERS[1]
-        canvas.itemconfig(end_game_label, text="GG! Player " + win_team + " has won!")
+        canvas.itemconfig(
+            end_game_label, text="GG! Player " + win_team + " has won!")
         if score[0] == score[1]:
-           canvas.itemconfig(end_game_label, text="GG! It's a tie!") 
+            canvas.itemconfig(end_game_label, text="GG! It's a tie!")
         return
     if not white_flag[0] and not white_flag[1]:
         current_player = 1 if current_player == 0 else 0
@@ -143,7 +145,6 @@ def on_move(event):
 
             if new_xpos > 0 and new_ypos > 0 and new_xpos < CANVAS_WIDTH_PX - PICKER_CELL_SIZE_PX and new_ypos < CANVAS_HEIGHT_PX:
                 canvas.move(item, new_xpos-mouse_xpos, new_ypos-mouse_ypos)
-
         mouse_xpos = new_xpos
         mouse_ypos = new_ypos
     else:
@@ -194,6 +195,44 @@ def on_resign():
     switch_player()
 
 
+def on_rotate(event):
+    global selected_block, selected_block_segment, mouse_xpos, mouse_ypos
+    tags = canvas.gettags("current")
+    if current_player == None:
+        return
+    if not tags or not tags[0].split("_")[0] == PLAYERS[current_player]:
+        return
+    mouse_xpos = event.x
+    mouse_ypos = event.y
+    selected_block = tags[0]
+    selected_block_segment = tags[1]
+
+    segments = canvas.find_withtag(selected_block)
+    seg = None
+    for segment in segments:
+        if selected_block_segment in canvas.gettags(segment):
+            seg = segment
+    coords = canvas.coords(seg)
+    selected_block_coords = [coords[0], coords[1]]
+    block_object = picker_blocks[PLAYERS[current_player]][int(selected_block.split(
+        "_")[2])]
+    rotated_block = transformer.rotate_90(block_object, selected_block_segment)
+    picker_blocks[PLAYERS[current_player]][int(selected_block.split(
+        "_")[2])] = rotated_block
+
+    canvas.delete(selected_block)
+    block_segment = 0
+    for coord in rotated_block.coordinates:
+        canvas.create_rectangle(
+            selected_block_coords[0] + coord[1]*PICKER_CELL_SIZE_PX,
+            selected_block_coords[1] + coord[0]*PICKER_CELL_SIZE_PX,
+            selected_block_coords[0] +
+            (coord[1] + 1)*PICKER_CELL_SIZE_PX,
+            selected_block_coords[1] + (coord[0] + 1)*PICKER_CELL_SIZE_PX,
+            fill=PLAYERS[current_player], tags=(PLAYERS[current_player] + "_block_" + str(rotated_block.index), "block_segment_" + str(block_segment), "picker"))
+        block_segment += 1
+
+
 def update_score():
     canvas.itemconfig(red_score_label, text="Red Score: " + str(score[0]))
     canvas.itemconfig(green_score_label, text="Green Score: " + str(score[1]))
@@ -208,7 +247,7 @@ canvas.pack()
 
 canvas.bind("<Configure>", configure_canvas)
 canvas.bind("<Button-1>", on_block_selection)
-# canvas.bind("<Button-3>", on_canvas_click) Todo: bind to rotate?
+canvas.bind("<Button-3>", on_rotate)
 canvas.tag_bind("picker", '<Button1-Motion>', on_move)
 canvas.tag_bind("picker", '<ButtonRelease-1>', on_release)
 
@@ -220,7 +259,8 @@ green_score_label = canvas.create_text(
 end_game_label = canvas.create_text(
     700, 50, font="Times 16", text="")
 
-resign_button = tk.Button(canvas, text='White Flag', command=on_resign, anchor=W)
+resign_button = tk.Button(canvas, text='White Flag',
+                          command=on_resign, anchor=W)
 resign_button.configure(width=8, activebackground="#33B5E5", font="Times 12")
 canvas.create_window(CANVAS_WIDTH_PX - 100, 5,
                      anchor=NW, window=resign_button)
