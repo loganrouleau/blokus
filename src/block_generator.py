@@ -1,4 +1,4 @@
-import block
+from . import block
 
 
 def generate_blocks():

@@ -1,4 +1,4 @@
-import block
+from . import block
 
 
 def rotate_90(selected_block, selected_segment):

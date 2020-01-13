@@ -1,9 +1,9 @@
 import tkinter as tk
 from tkinter import W, NW
-import block
-import block_generator
-import validator
-import transformer
+from . import block
+from . import block_generator
+from . import validator
+from . import transformer
 
 CELL_SIZE_PX = 36
 BOARD_SIZE_CELLS = 14

@@ -8,7 +8,7 @@ This application requires Python 3 and Tkinter, which comes bundled with the Pyt
 
 ## Run the application
 
-<code>python src/blokus.py</code>
+<code>python -m src.blokus</code>
 
 ## Run unit tests
 
