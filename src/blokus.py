@@ -233,6 +233,44 @@ def on_rotate(event):
         block_segment += 1
 
 
+def on_flip(event):
+    global selected_block, selected_block_segment, mouse_xpos, mouse_ypos
+    tags = canvas.gettags("current")
+    if current_player == None:
+        return
+    if not tags or not tags[0].split("_")[0] == PLAYERS[current_player]:
+        return
+    mouse_xpos = event.x
+    mouse_ypos = event.y
+    selected_block = tags[0]
+    selected_block_segment = tags[1]
+
+    segments = canvas.find_withtag(selected_block)
+    seg = None
+    for segment in segments:
+        if selected_block_segment in canvas.gettags(segment):
+            seg = segment
+    coords = canvas.coords(seg)
+    selected_block_coords = [coords[0], coords[1]]
+    block_object = picker_blocks[PLAYERS[current_player]][int(selected_block.split(
+        "_")[2])]
+    flipped_block = transformer.flip(block_object, selected_block_segment)
+    picker_blocks[PLAYERS[current_player]][int(selected_block.split(
+        "_")[2])] = flipped_block
+
+    canvas.delete(selected_block)
+    block_segment = 0
+    for coord in flipped_block.coordinates:
+        canvas.create_rectangle(
+            selected_block_coords[0] + coord[1]*PICKER_CELL_SIZE_PX,
+            selected_block_coords[1] + coord[0]*PICKER_CELL_SIZE_PX,
+            selected_block_coords[0] +
+            (coord[1] + 1)*PICKER_CELL_SIZE_PX,
+            selected_block_coords[1] + (coord[0] + 1)*PICKER_CELL_SIZE_PX,
+            fill=PLAYERS[current_player], tags=(PLAYERS[current_player] + "_block_" + str(flipped_block.index), "block_segment_" + str(block_segment), "picker"))
+        block_segment += 1
+
+
 def update_score():
     canvas.itemconfig(red_score_label, text="Red Score: " + str(score[0]))
     canvas.itemconfig(green_score_label, text="Green Score: " + str(score[1]))
@@ -246,8 +284,9 @@ canvas = tk.Canvas(root, width=CANVAS_WIDTH_PX - 4,
 canvas.pack()
 
 canvas.bind("<Configure>", configure_canvas)
-canvas.bind("<Button-1>", on_block_selection)
-canvas.bind("<Button-3>", on_rotate)
+canvas.bind("<Button-1>", on_block_selection)  # left click
+canvas.bind("<Button-2>", on_flip)  # middle click
+canvas.bind("<Button-3>", on_rotate)  # right click
 canvas.tag_bind("picker", '<Button1-Motion>', on_move)
 canvas.tag_bind("picker", '<ButtonRelease-1>', on_release)
 

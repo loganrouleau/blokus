@@ -10,6 +10,11 @@ class TestTransformer(unittest.TestCase):
         self.assertEqual(transformer.rotate_90(
             input_block, "block_segment_1").coordinates[1], [0, 0])
 
+    def test_flipped_block_has_origin_at_selected_segment(self):
+        input_block = block.Block(0, [0, 3], [[0, 0], [0, 1]])
+        self.assertEqual(transformer.flip(
+            input_block, "block_segment_1").coordinates[1], [0, 0])
+
     def test_rotate_single_coord_block(self):
         input_block = block.Block(0, [0, 3], [[0, 0]])
         expected_coords = [[0, 0]]
@@ -41,6 +46,14 @@ class TestTransformer(unittest.TestCase):
         actual_block = transformer.rotate_90(actual_block, "block_segment_2")
         actual_block = transformer.rotate_90(actual_block, "block_segment_2")
         actual_coords = actual_block.coordinates
+        self.assertEqual(actual_coords, expected_coords)
+
+    def test_flip_large_block(self):
+        input_block = block.Block(
+            18, [9, 11], [[1, 0], [0, 1], [1, 1], [2, 1], [0, 2]])
+        expected_coords = [[1, 1], [0, 0], [1, 0], [2, 0], [0, -1]]
+        actual_coords = transformer.flip(
+            input_block, "block_segment_1").coordinates
         self.assertEqual(actual_coords, expected_coords)
 
 
