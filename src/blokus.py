@@ -1,187 +1,151 @@
 import tkinter as tk
 
-from . import (block, block_generator, constants, game_state, transformer, validator)
+from . import constants, transformer, validator
+from .model import Model
+from .view import View
 
 
 class BlokusApp(tk.Frame):
     def __init__(self, master=None):
         tk.Frame.__init__(self, master)
-        self.state = game_state.GameState()
-        self.state.resign_button.configure(command=self.on_resign)
-        self.state.canvas.bind("<Configure>", self.configure_canvas)
-        self.state.canvas.bind("<Button-1>", self.on_block_selection)  # left click
-        self.state.canvas.bind("<Button-2>", self.on_flip)  # middle click
-        self.state.canvas.bind("<Button-3>", self.on_rotate)  # right click
-        self.state.canvas.tag_bind("picker", '<Button1-Motion>', self.on_move)
-        self.state.canvas.tag_bind("picker", '<ButtonRelease-1>', self.on_release)
+        self.model = Model()
+        self.view = View(self.model)
+        self.bind_callbacks()
+
+    def bind_callbacks(self):
+        self.model.resign_button.configure(command=self.on_resign)
+        self.model.canvas.bind("<Configure>", self.view.configure_canvas)
+        self.model.canvas.bind("<Button-1>", self.on_block_selection)  # left click
+        self.model.canvas.bind("<Button-2>", self.on_flip)  # middle click
+        self.model.canvas.bind("<Button-3>", self.on_rotate)  # right click
+        self.model.canvas.tag_bind("picker", '<Button1-Motion>', self.on_move)
+        self.model.canvas.tag_bind("picker", '<ButtonRelease-1>', self.on_release)
 
     def switch_player(self):
-        self.state.selected_block = "-1"
-        if self.state.white_flag[0] and self.state.white_flag[1]:
-            self.state.current_player = None  # end of the game
-            self.state.resign_button['state'] = 'disabled'
+        self.model.selected_block = "-1"
+        if self.model.white_flag[0] and self.model.white_flag[1]:
+            self.model.current_player = None  # end of the game
+            self.model.resign_button['state'] = 'disabled'
             # resign_button['text']='Restart'
-            win_team = constants.PLAYERS[0] if self.state.score[0] > self.state.score[1] else constants.PLAYERS[1]
-            self.state.canvas.itemconfig(self.state.end_game_label,
+            win_team = constants.PLAYERS[0] if self.model.score[0] > self.model.score[1] else constants.PLAYERS[1]
+            self.model.canvas.itemconfig(self.model.end_game_label,
                                          text="constants.GG! Player " + win_team + " has won!")
-            if self.state.score[0] == self.state.score[1]:
-                self.state.canvas.itemconfig(self.state.end_game_label, text="constants.GG! It's a tie!")
+            if self.model.score[0] == self.model.score[1]:
+                self.model.canvas.itemconfig(self.model.end_game_label, text="constants.GG! It's a tie!")
             return
-        if not self.state.white_flag[0] and not self.state.white_flag[1]:
-            self.state.current_player = 1 if self.state.current_player == 0 else 0
+        if not self.model.white_flag[0] and not self.model.white_flag[1]:
+            self.model.current_player = 1 if self.model.current_player == 0 else 0
             return
-        if not self.state.white_flag[0] and self.state.white_flag[1]:
-            self.state.current_player = 0
+        if not self.model.white_flag[0] and self.model.white_flag[1]:
+            self.model.current_player = 0
             return
-        if not self.state.white_flag[1] and self.state.white_flag[0]:
-            self.state.current_player = 1
+        if not self.model.white_flag[1] and self.model.white_flag[0]:
+            self.model.current_player = 1
             return
-
-    def paint_board(self):
-        for row in range(constants.BOARD_SIZE_CELLS):
-            for col in range(constants.BOARD_SIZE_CELLS):
-                if self.state.tiles[row][col] == 0 or self.state.tiles[row][col] == 1:
-                    self.state.canvas.create_rectangle(
-                        (col)*constants.CELL_SIZE_PX,
-                        (row)*constants.CELL_SIZE_PX,
-                        (col + 1)*constants.CELL_SIZE_PX,
-                        (row + 1)*constants.CELL_SIZE_PX,
-                        fill=constants.PLAYERS[int(self.state.tiles[row][col])])
-
-    def configure_canvas(self, event=None):
-        self.draw_board_grid()
-        self.draw_picker_blocks()
-
-    def draw_board_grid(self):
-        for i in range(0, constants.BOARD_SIZE_PX + 1, constants.CELL_SIZE_PX):
-            self.state.canvas.create_line([(i, 0), (i, constants.BOARD_SIZE_PX)])
-        for i in range(0, constants.BOARD_SIZE_PX, constants.CELL_SIZE_PX):
-            self.state.canvas.create_line([(0, i), (constants.BOARD_SIZE_PX, i)])
-
-    def draw_picker_blocks(self):
-        height_offset = constants.PICKER_HEIGHT_OFFSET_PX
-        for player in constants.PLAYERS:
-            for current_block in self.state.picker_blocks[constants.PLAYERS[player]]:
-                block_segment = 0
-                for coord in current_block.coordinates:
-                    self.state.canvas.create_rectangle(
-                        constants.PICKER_WIDTH_OFFSET_PX + (
-                            current_block.position[1] + coord[1])*constants.PICKER_CELL_SIZE_PX,
-                        height_offset + (
-                            current_block.position[0] + coord[0])*constants.PICKER_CELL_SIZE_PX,
-                        constants.PICKER_WIDTH_OFFSET_PX + (
-                            current_block.position[1] + coord[1] + 1)*constants.PICKER_CELL_SIZE_PX,
-                        height_offset + (
-                            current_block.position[0] + coord[0] + 1)*constants.PICKER_CELL_SIZE_PX,
-                        fill=constants.PLAYERS[player],
-                        tags=(constants.PLAYERS[player] + "_block_" + str(current_block.index),
-                              "block_segment_" + str(block_segment), "picker"))
-                    block_segment += 1
-            height_offset += constants.PICKER_HEIGHT_PX
 
     def on_block_selection(self, event):
-        tags = self.state.canvas.gettags("current")
-        if self.state.current_player == None:
+        tags = self.model.canvas.gettags("current")
+        if self.model.current_player == None:
             return
-        if not tags or not tags[0].split("_")[0] == constants.PLAYERS[self.state.current_player]:
+        if not tags or not tags[0].split("_")[0] == constants.PLAYERS[self.model.current_player]:
             return
-        self.state.mouse_xpos = event.x
-        self.state.mouse_ypos = event.y
-        self.state.selected_block = tags[0]
-        self.state.selected_block_segment = tags[1]
+        self.model.mouse_xpos = event.x
+        self.model.mouse_ypos = event.y
+        self.model.selected_block = tags[0]
+        self.model.selected_block_segment = tags[1]
         if event.x > constants.BOARD_SIZE_PX + constants.DIVIDER_WIDTH_PX:
-            for item in self.state.canvas.find_withtag(self.state.selected_block):
-                self.state.canvas.scale(item, event.x, event.y, 2, 2)
+            for item in self.model.canvas.find_withtag(self.model.selected_block):
+                self.model.canvas.scale(item, event.x, event.y, 2, 2)
 
     def on_move(self, event):
-        if self.state.move_flag:
+        if self.model.move_flag:
             new_xpos, new_ypos = event.x, event.y
-            for item in self.state.canvas.find_withtag(self.state.selected_block):
+            for item in self.model.canvas.find_withtag(self.model.selected_block):
                 if new_xpos <= 0 or new_xpos >= constants.CANVAS_WIDTH_PX - constants.PICKER_CELL_SIZE_PX or new_ypos <= 0 or new_ypos >= constants.CANVAS_HEIGHT_PX:
                     if new_xpos <= 0:
-                        self.state.mouse_xpos = constants.DIVIDER_WIDTH_PX/2
+                        self.model.mouse_xpos = constants.DIVIDER_WIDTH_PX/2
                     if new_ypos <= 0:
-                        self.state.mouse_ypos = constants.DIVIDER_WIDTH_PX/2
+                        self.model.mouse_ypos = constants.DIVIDER_WIDTH_PX/2
                     if new_xpos >= constants.CANVAS_WIDTH_PX:
-                        self.state.mouse_xpos = constants.CANVAS_WIDTH_PX - constants.PICKER_CELL_SIZE_PX * 4
+                        self.model.mouse_xpos = constants.CANVAS_WIDTH_PX - constants.PICKER_CELL_SIZE_PX * 4
                     if new_ypos >= constants.CANVAS_HEIGHT_PX:
-                        self.state.mouse_ypos = constants.CANVAS_HEIGHT_PX - constants.DIVIDER_WIDTH_PX
+                        self.model.mouse_ypos = constants.CANVAS_HEIGHT_PX - constants.DIVIDER_WIDTH_PX
                     return
 
                 if new_xpos > 0 and new_ypos > 0 and new_xpos < constants.CANVAS_WIDTH_PX - constants.PICKER_CELL_SIZE_PX and new_ypos < constants.CANVAS_HEIGHT_PX:
-                    self.state.canvas.move(item, new_xpos-self.state.mouse_xpos, new_ypos-self.state.mouse_ypos)
-            self.state.mouse_xpos = new_xpos
-            self.state.mouse_ypos = new_ypos
+                    self.model.canvas.move(item, new_xpos-self.model.mouse_xpos, new_ypos-self.model.mouse_ypos)
+            self.model.mouse_xpos = new_xpos
+            self.model.mouse_ypos = new_ypos
         else:
-            self.state.move_flag = True
-            self.state.canvas.tag_raise(self.state.selected_block)
-            self.state.mouse_xpos = event.x
-            self.state.mouse_ypos = event.y
+            self.model.move_flag = True
+            self.model.canvas.tag_raise(self.model.selected_block)
+            self.model.mouse_xpos = event.x
+            self.model.mouse_ypos = event.y
 
     def on_release(self, event):
-        if self.state.selected_block == "-1":
+        if self.model.selected_block == "-1":
             return
-        if self.state.mouse_xpos > constants.BOARD_SIZE_PX + constants.DIVIDER_WIDTH_PX:  # replace event.x with mouse_xpos
-            for item in self.state.canvas.find_withtag(self.state.selected_block):
+        if self.model.mouse_xpos > constants.BOARD_SIZE_PX + constants.DIVIDER_WIDTH_PX:  # replace event.x with mouse_xpos
+            for item in self.model.canvas.find_withtag(self.model.selected_block):
                 # replace event.x with mouse_xpos
-                self.state.canvas.scale(item, self.state.mouse_xpos, self.state.mouse_ypos, 0.5, 0.5)
-        self.state.move_flag = False
+                self.model.canvas.scale(item, self.model.mouse_xpos, self.model.mouse_ypos, 0.5, 0.5)
+        self.model.move_flag = False
         # replace event.x with mouse_xpos
-        col = int(self.state.mouse_xpos/constants.CELL_SIZE_PX)
-        row = int(self.state.mouse_ypos/constants.CELL_SIZE_PX)
+        col = int(self.model.mouse_xpos/constants.CELL_SIZE_PX)
+        row = int(self.model.mouse_ypos/constants.CELL_SIZE_PX)
 
         proposed_coordinates = []
-        offset = self.state.picker_blocks[constants.PLAYERS[self.state.current_player]][int(self.state.selected_block.split(
-            "_")[2])].coordinates[int(self.state.selected_block_segment.split("_")[2])]
-        for coord in self.state.picker_blocks[constants.PLAYERS[self.state.current_player]][int(self.state.selected_block.split("_")[2])].coordinates:
+        offset = self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][int(self.model.selected_block.split(
+            "_")[2])].coordinates[int(self.model.selected_block_segment.split("_")[2])]
+        for coord in self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][int(self.model.selected_block.split("_")[2])].coordinates:
             proposed_coordinates.append([row + coord[0] - offset[0], col + coord[1] - offset[1]])
-        if validator.placement_is_valid(self.state.tiles, proposed_coordinates, self.state.current_player):
+        if validator.placement_is_valid(self.model.tiles, proposed_coordinates, self.model.current_player):
             for coord in proposed_coordinates:
-                self.state.tiles[coord[0]][coord[1]] = self.state.current_player
-            for item in self.state.canvas.find_withtag(self.state.selected_block):
-                self.state.canvas.delete(item)
-            self.paint_board()
+                self.model.tiles[coord[0]][coord[1]] = self.model.current_player
+            for item in self.model.canvas.find_withtag(self.model.selected_block):
+                self.model.canvas.delete(item)
+            self.view.paint_board()
             current_tiles_for_player = 0
-            for row in self.state.tiles:
+            for row in self.model.tiles:
                 current_tiles_for_player += row.count(
-                    self.state.current_player)
-            self.state.score[self.state.current_player] = -89 + current_tiles_for_player
-            self.update_score()
+                    self.model.current_player)
+            self.model.score[self.model.current_player] = -89 + current_tiles_for_player
+            self.view.update_score()
             self.switch_player()
 
     def on_resign(self):
-        self.state.white_flag[self.state.current_player] = True
+        self.model.white_flag[self.model.current_player] = True
         self.switch_player()
 
     def on_rotate(self, event):
-        tags = self.state.canvas.gettags("current")
-        if self.state.current_player == None:
+        tags = self.model.canvas.gettags("current")
+        if self.model.current_player == None:
             return
-        if not tags or not tags[0].split("_")[0] == constants.PLAYERS[self.state.current_player]:
+        if not tags or not tags[0].split("_")[0] == constants.PLAYERS[self.model.current_player]:
             return
-        self.state.mouse_xpos = event.x
-        self.state.mouse_ypos = event.y
-        self.state.selected_block = tags[0]
-        self.state.selected_block_segment = tags[1]
+        self.model.mouse_xpos = event.x
+        self.model.mouse_ypos = event.y
+        self.model.selected_block = tags[0]
+        self.model.selected_block_segment = tags[1]
 
-        segments = self.state.canvas.find_withtag(self.state.selected_block)
+        segments = self.model.canvas.find_withtag(self.model.selected_block)
         seg = None
         for segment in segments:
-            if self.state.selected_block_segment in self.state.canvas.gettags(segment):
+            if self.model.selected_block_segment in self.model.canvas.gettags(segment):
                 seg = segment
-        coords = self.state.canvas.coords(seg)
+        coords = self.model.canvas.coords(seg)
         selected_block_coords = [coords[0], coords[1]]
-        block_object = self.state.picker_blocks[constants.PLAYERS[self.state.current_player]][int(self.state.selected_block.split(
+        block_object = self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][int(self.model.selected_block.split(
             "_")[2])]
         rotated_block = transformer.rotate_90(
-            block_object, self.state.selected_block_segment)
-        self.state.picker_blocks[constants.PLAYERS[self.state.current_player]][int(self.state.selected_block.split(
+            block_object, self.model.selected_block_segment)
+        self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][int(self.model.selected_block.split(
             "_")[2])] = rotated_block
 
-        self.state.canvas.delete(self.state.selected_block)
+        self.model.canvas.delete(self.model.selected_block)
         block_segment = 0
         for coord in rotated_block.coordinates:
-            self.state.canvas.create_rectangle(
+            self.model.canvas.create_rectangle(
                 selected_block_coords[0] + coord[1] *
                 constants.PICKER_CELL_SIZE_PX,
                 selected_block_coords[1] + coord[0] *
@@ -190,38 +154,38 @@ class BlokusApp(tk.Frame):
                 (coord[1] + 1)*constants.PICKER_CELL_SIZE_PX,
                 selected_block_coords[1] +
                 (coord[0] + 1)*constants.PICKER_CELL_SIZE_PX,
-                fill=constants.PLAYERS[self.state.current_player], tags=(constants.PLAYERS[self.state.current_player] + "_block_" + str(rotated_block.index), "block_segment_" + str(block_segment), "picker"))
+                fill=constants.PLAYERS[self.model.current_player], tags=(constants.PLAYERS[self.model.current_player] + "_block_" + str(rotated_block.index), "block_segment_" + str(block_segment), "picker"))
             block_segment += 1
 
     def on_flip(self, event):
-        tags = self.state.canvas.gettags("current")
-        if self.state.current_player == None:
+        tags = self.model.canvas.gettags("current")
+        if self.model.current_player == None:
             return
-        if not tags or not tags[0].split("_")[0] == constants.PLAYERS[self.state.current_player]:
+        if not tags or not tags[0].split("_")[0] == constants.PLAYERS[self.model.current_player]:
             return
-        self.state.mouse_xpos = event.x
-        self.state.mouse_ypos = event.y
-        self.state.selected_block = tags[0]
-        self.state.selected_block_segment = tags[1]
+        self.model.mouse_xpos = event.x
+        self.model.mouse_ypos = event.y
+        self.model.selected_block = tags[0]
+        self.model.selected_block_segment = tags[1]
 
-        segments = self.state.canvas.find_withtag(self.state.selected_block)
+        segments = self.model.canvas.find_withtag(self.model.selected_block)
         seg = None
         for segment in segments:
-            if self.state.selected_block_segment in self.state.canvas.gettags(segment):
+            if self.model.selected_block_segment in self.model.canvas.gettags(segment):
                 seg = segment
-        coords = self.state.canvas.coords(seg)
+        coords = self.model.canvas.coords(seg)
         selected_block_coords = [coords[0], coords[1]]
-        block_object = self.state.picker_blocks[constants.PLAYERS[self.state.current_player]][int(self.state.selected_block.split(
+        block_object = self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][int(self.model.selected_block.split(
             "_")[2])]
         flipped_block = transformer.flip(
-            block_object, self.state.selected_block_segment)
-        self.state.picker_blocks[constants.PLAYERS[self.state.current_player]][int(self.state.selected_block.split(
+            block_object, self.model.selected_block_segment)
+        self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][int(self.model.selected_block.split(
             "_")[2])] = flipped_block
 
-        self.state.canvas.delete(self.state.selected_block)
+        self.model.canvas.delete(self.model.selected_block)
         block_segment = 0
         for coord in flipped_block.coordinates:
-            self.state.canvas.create_rectangle(
+            self.model.canvas.create_rectangle(
                 selected_block_coords[0] + coord[1] *
                 constants.PICKER_CELL_SIZE_PX,
                 selected_block_coords[1] + coord[0] *
@@ -230,14 +194,10 @@ class BlokusApp(tk.Frame):
                 (coord[1] + 1)*constants.PICKER_CELL_SIZE_PX,
                 selected_block_coords[1] +
                 (coord[0] + 1)*constants.PICKER_CELL_SIZE_PX,
-                fill=constants.PLAYERS[self.state.current_player],
-                tags=(constants.PLAYERS[self.state.current_player] + "_block_" + str(flipped_block.index),
+                fill=constants.PLAYERS[self.model.current_player],
+                tags=(constants.PLAYERS[self.model.current_player] + "_block_" + str(flipped_block.index),
                       "block_segment_" + str(block_segment), "picker"))
             block_segment += 1
-
-    def update_score(self):
-        self.state.canvas.itemconfig(self.state.red_score_label, text="Red Score: " + str(self.state.score[0]))
-        self.state.canvas.itemconfig(self.state.green_score_label, text="Green Score: " + str(self.state.score[1]))
 
 
 root = tk.Tk()

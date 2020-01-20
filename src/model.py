@@ -4,7 +4,7 @@ from tkinter import W, NW
 from . import constants
 
 
-class GameState:
+class Model:
     def __init__(self):
         self.current_player = 0
         self.selected_block = "-1"
