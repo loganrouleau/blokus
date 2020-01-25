@@ -34,3 +34,11 @@ class Model:
         self.resign_button = tk.Button(self.canvas, text='White Flag', anchor=W)
         self.resign_button.configure(width=8, activebackground="#33B5E5", font="Times 12")
         self.canvas.create_window(constants.CANVAS_WIDTH_PX - 100, 5, anchor=NW, window=self.resign_button)
+    
+
+    def get_selected_block_segment(self):
+        return int(self.selected_block_segment.split("_")[2])
+
+
+    def get_selected_block(self):
+        return int(self.selected_block.split("_")[2])

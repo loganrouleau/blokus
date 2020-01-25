@@ -95,9 +95,8 @@ class BlokusApp(tk.Frame):
         row = int(self.model.mouse_ypos/constants.CELL_SIZE_PX)
 
         proposed_coordinates = []
-        offset = self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][int(self.model.selected_block.split(
-            "_")[2])].coordinates[int(self.model.selected_block_segment.split("_")[2])]
-        for coord in self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][int(self.model.selected_block.split("_")[2])].coordinates:
+        offset = self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][self.model.get_selected_block()].coordinates[self.model.get_selected_block_segment()]
+        for coord in self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][self.model.get_selected_block()].coordinates:
             proposed_coordinates.append([row + coord[0] - offset[0], col + coord[1] - offset[1]])
         if validator.placement_is_valid(self.model.tiles, proposed_coordinates, self.model.current_player):
             for coord in proposed_coordinates:
@@ -135,12 +134,10 @@ class BlokusApp(tk.Frame):
                 seg = segment
         coords = self.model.canvas.coords(seg)
         selected_block_coords = [coords[0], coords[1]]
-        block_object = self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][int(self.model.selected_block.split(
-            "_")[2])]
+        block_object = self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][self.model.get_selected_block()]
         rotated_block = transformer.rotate_90(
-            block_object, self.model.selected_block_segment)
-        self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][int(self.model.selected_block.split(
-            "_")[2])] = rotated_block
+            block_object, self.model.get_selected_block_segment())
+        self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][self.model.get_selected_block()] = rotated_block
 
         self.model.canvas.delete(self.model.selected_block)
         block_segment = 0
@@ -175,12 +172,10 @@ class BlokusApp(tk.Frame):
                 seg = segment
         coords = self.model.canvas.coords(seg)
         selected_block_coords = [coords[0], coords[1]]
-        block_object = self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][int(self.model.selected_block.split(
-            "_")[2])]
+        block_object = self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][self.model.get_selected_block()]
         flipped_block = transformer.flip(
-            block_object, self.model.selected_block_segment)
-        self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][int(self.model.selected_block.split(
-            "_")[2])] = flipped_block
+            block_object, self.model.get_selected_block_segment())
+        self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][self.model.get_selected_block()] = flipped_block
 
         self.model.canvas.delete(self.model.selected_block)
         block_segment = 0
