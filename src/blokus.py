@@ -24,30 +24,26 @@ class BlokusApp(tk.Frame):
     def switch_player(self):
         self.model.selected_block = "-1"
         if self.model.white_flag[0] and self.model.white_flag[1]:
-            self.model.current_player = None  # end of the game
             self.model.resign_button['state'] = 'disabled'
-            # resign_button['text']='Restart'
-            win_team = constants.PLAYERS[0] if self.model.score[0] > self.model.score[1] else constants.PLAYERS[1]
+            win_team = constants.Player.red if self.model.score[0] > self.model.score[1] else constants.Player.green
             self.model.canvas.itemconfig(self.model.end_game_label,
-                                         text="constants.GG! Player " + win_team + " has won!")
+                                         text="GG! Player " + win_team.name + " has won!")
             if self.model.score[0] == self.model.score[1]:
                 self.model.canvas.itemconfig(self.model.end_game_label, text="constants.GG! It's a tie!")
             return
         if not self.model.white_flag[0] and not self.model.white_flag[1]:
-            self.model.current_player = 1 if self.model.current_player == 0 else 0
+            self.model.current_player = constants.Player.red if self.model.current_player == constants.Player.green else constants.Player.green
             return
         if not self.model.white_flag[0] and self.model.white_flag[1]:
-            self.model.current_player = 0
+            self.model.current_player = constants.Player.red
             return
         if not self.model.white_flag[1] and self.model.white_flag[0]:
-            self.model.current_player = 1
+            self.model.current_player = constants.Player.green
             return
 
     def on_block_selection(self, event):
         tags = self.model.canvas.gettags("current")
-        if self.model.current_player == None:
-            return
-        if not tags or not tags[0].split("_")[0] == constants.PLAYERS[self.model.current_player]:
+        if not tags or not tags[0].split("_")[0] == self.model.current_player.name:
             return
         self.model.mouse_xpos = event.x
         self.model.mouse_ypos = event.y
@@ -85,42 +81,39 @@ class BlokusApp(tk.Frame):
     def on_release(self, event):
         if self.model.selected_block == "-1":
             return
-        if self.model.mouse_xpos > constants.BOARD_SIZE_PX + constants.DIVIDER_WIDTH_PX:  # replace event.x with mouse_xpos
+        if self.model.mouse_xpos > constants.BOARD_SIZE_PX + constants.DIVIDER_WIDTH_PX:
             for item in self.model.canvas.find_withtag(self.model.selected_block):
-                # replace event.x with mouse_xpos
                 self.model.canvas.scale(item, self.model.mouse_xpos, self.model.mouse_ypos, 0.5, 0.5)
         self.model.move_flag = False
-        # replace event.x with mouse_xpos
         col = int(self.model.mouse_xpos/constants.CELL_SIZE_PX)
         row = int(self.model.mouse_ypos/constants.CELL_SIZE_PX)
 
         proposed_coordinates = []
-        offset = self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][self.model.get_selected_block()].coordinates[self.model.get_selected_block_segment()]
-        for coord in self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][self.model.get_selected_block()].coordinates:
+        offset = self.model.picker_blocks[self.model.current_player
+                                          ][self.model.get_selected_block()].coordinates[self.model.get_selected_block_segment()]
+        for coord in self.model.picker_blocks[self.model.current_player][self.model.get_selected_block()].coordinates:
             proposed_coordinates.append([row + coord[0] - offset[0], col + coord[1] - offset[1]])
-        if validator.placement_is_valid(self.model.tiles, proposed_coordinates, self.model.current_player):
+        if validator.placement_is_valid(self.model.tiles, proposed_coordinates, self.model.current_player.value):
             for coord in proposed_coordinates:
-                self.model.tiles[coord[0]][coord[1]] = self.model.current_player
+                self.model.tiles[coord[0]][coord[1]] = self.model.current_player.value
             for item in self.model.canvas.find_withtag(self.model.selected_block):
                 self.model.canvas.delete(item)
             self.view.paint_board()
             current_tiles_for_player = 0
             for row in self.model.tiles:
                 current_tiles_for_player += row.count(
-                    self.model.current_player)
-            self.model.score[self.model.current_player] = -89 + current_tiles_for_player
+                    self.model.current_player.value)
+            self.model.score[self.model.current_player.value] = -89 + current_tiles_for_player
             self.view.update_score()
             self.switch_player()
 
     def on_resign(self):
-        self.model.white_flag[self.model.current_player] = True
+        self.model.white_flag[self.model.current_player.value] = True
         self.switch_player()
 
     def on_rotate(self, event):
         tags = self.model.canvas.gettags("current")
-        if self.model.current_player == None:
-            return
-        if not tags or not tags[0].split("_")[0] == constants.PLAYERS[self.model.current_player]:
+        if not tags or not tags[0].split("_")[0] == self.model.current_player.name:
             return
         self.model.mouse_xpos = event.x
         self.model.mouse_ypos = event.y
@@ -134,10 +127,12 @@ class BlokusApp(tk.Frame):
                 seg = segment
         coords = self.model.canvas.coords(seg)
         selected_block_coords = [coords[0], coords[1]]
-        block_object = self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][self.model.get_selected_block()]
+        block_object = self.model.picker_blocks[self.model.current_player
+                                                ][self.model.get_selected_block()]
         rotated_block = transformer.rotate_90(
             block_object, self.model.get_selected_block_segment())
-        self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][self.model.get_selected_block()] = rotated_block
+        self.model.picker_blocks[self.model.current_player
+                                 ][self.model.get_selected_block()] = rotated_block
 
         self.model.canvas.delete(self.model.selected_block)
         block_segment = 0
@@ -151,14 +146,14 @@ class BlokusApp(tk.Frame):
                 (coord[1] + 1)*constants.PICKER_CELL_SIZE_PX,
                 selected_block_coords[1] +
                 (coord[0] + 1)*constants.PICKER_CELL_SIZE_PX,
-                fill=constants.PLAYERS[self.model.current_player], tags=(constants.PLAYERS[self.model.current_player] + "_block_" + str(rotated_block.index), "block_segment_" + str(block_segment), "picker"))
+                fill=self.model.current_player.name, tags=(self.model.current_player.name + "_block_" + str(rotated_block.index), "block_segment_" + str(block_segment), "picker"))
             block_segment += 1
 
     def on_flip(self, event):
         tags = self.model.canvas.gettags("current")
         if self.model.current_player == None:
             return
-        if not tags or not tags[0].split("_")[0] == constants.PLAYERS[self.model.current_player]:
+        if not tags or not tags[0].split("_")[0] == self.model.current_player.name:
             return
         self.model.mouse_xpos = event.x
         self.model.mouse_ypos = event.y
@@ -172,10 +167,12 @@ class BlokusApp(tk.Frame):
                 seg = segment
         coords = self.model.canvas.coords(seg)
         selected_block_coords = [coords[0], coords[1]]
-        block_object = self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][self.model.get_selected_block()]
+        block_object = self.model.picker_blocks[self.model.current_player
+                                                ][self.model.get_selected_block()]
         flipped_block = transformer.flip(
             block_object, self.model.get_selected_block_segment())
-        self.model.picker_blocks[constants.PLAYERS[self.model.current_player]][self.model.get_selected_block()] = flipped_block
+        self.model.picker_blocks[self.model.current_player
+                                 ][self.model.get_selected_block()] = flipped_block
 
         self.model.canvas.delete(self.model.selected_block)
         block_segment = 0
@@ -189,8 +186,8 @@ class BlokusApp(tk.Frame):
                 (coord[1] + 1)*constants.PICKER_CELL_SIZE_PX,
                 selected_block_coords[1] +
                 (coord[0] + 1)*constants.PICKER_CELL_SIZE_PX,
-                fill=constants.PLAYERS[self.model.current_player],
-                tags=(constants.PLAYERS[self.model.current_player] + "_block_" + str(flipped_block.index),
+                fill=self.model.current_player.name,
+                tags=(self.model.current_player.name + "_block_" + str(flipped_block.index),
                       "block_segment_" + str(block_segment), "picker"))
             block_segment += 1
 

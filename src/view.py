@@ -17,8 +17,8 @@ class View:
 
     def draw_picker_blocks(self):
         height_offset = constants.PICKER_HEIGHT_OFFSET_PX
-        for player in constants.PLAYERS:
-            for current_block in self.model.picker_blocks[constants.PLAYERS[player]]:
+        for player in constants.Player:
+            for current_block in self.model.picker_blocks[player]:
                 block_segment = 0
                 for coord in current_block.coordinates:
                     self.model.canvas.create_rectangle(
@@ -30,8 +30,8 @@ class View:
                             current_block.position[1] + coord[1] + 1)*constants.PICKER_CELL_SIZE_PX,
                         height_offset + (
                             current_block.position[0] + coord[0] + 1)*constants.PICKER_CELL_SIZE_PX,
-                        fill=constants.PLAYERS[player],
-                        tags=(constants.PLAYERS[player] + "_block_" + str(current_block.index),
+                        fill=player.name,
+                        tags=(player.name + "_block_" + str(current_block.index),
                               "block_segment_" + str(block_segment), "picker"))
                     block_segment += 1
             height_offset += constants.PICKER_HEIGHT_PX
@@ -45,7 +45,7 @@ class View:
                         (row)*constants.CELL_SIZE_PX,
                         (col + 1)*constants.CELL_SIZE_PX,
                         (row + 1)*constants.CELL_SIZE_PX,
-                        fill=constants.PLAYERS[int(self.model.tiles[row][col])])
+                        fill=constants.Player(int(self.model.tiles[row][col])).name)
 
     def update_score(self):
         self.model.canvas.itemconfig(self.model.red_score_label, text="Red Score: " + str(self.model.score[0]))
