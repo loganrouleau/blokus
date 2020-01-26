@@ -1,7 +1,7 @@
-from . import block_generator
 import tkinter as tk
-from tkinter import W, NW
-from . import constants
+from tkinter import NW, W
+
+from . import block_generator, constants
 
 
 class Model:
