@@ -112,84 +112,27 @@ class BlokusApp(tk.Frame):
         self.switch_player()
 
     def on_rotate(self, event):
-        tags = self.model.canvas.gettags("current")
-        if not tags or not tags[0].split("_")[0] == self.model.current_player.name:
-            return
-        self.model.mouse_xpos = event.x
-        self.model.mouse_ypos = event.y
-        self.model.selected_block = tags[0]
-        self.model.selected_block_segment = tags[1]
-
-        segments = self.model.canvas.find_withtag(self.model.selected_block)
-        seg = None
-        for segment in segments:
-            if self.model.selected_block_segment in self.model.canvas.gettags(segment):
-                seg = segment
-        coords = self.model.canvas.coords(seg)
-        selected_block_coords = [coords[0], coords[1]]
-        block_object = self.model.picker_blocks[self.model.current_player
-                                                ][self.model.get_selected_block()]
-        rotated_block = transformer.rotate_90(
-            block_object, self.model.get_selected_block_segment())
-        self.model.picker_blocks[self.model.current_player
-                                 ][self.model.get_selected_block()] = rotated_block
-
-        self.model.canvas.delete(self.model.selected_block)
-        block_segment = 0
-        for coord in rotated_block.coordinates:
-            self.model.canvas.create_rectangle(
-                selected_block_coords[0] + coord[1] *
-                constants.PICKER_CELL_SIZE_PX,
-                selected_block_coords[1] + coord[0] *
-                constants.PICKER_CELL_SIZE_PX,
-                selected_block_coords[0] +
-                (coord[1] + 1)*constants.PICKER_CELL_SIZE_PX,
-                selected_block_coords[1] +
-                (coord[0] + 1)*constants.PICKER_CELL_SIZE_PX,
-                fill=self.model.current_player.name, tags=(self.model.current_player.name + "_block_" + str(rotated_block.index), "block_segment_" + str(block_segment), "picker"))
-            block_segment += 1
+        self.update_selection(event)
+        block_object = self.model.picker_blocks[self.model.current_player][self.model.get_selected_block()]
+        rotated_block = transformer.rotate_90(block_object, self.model.get_selected_block_segment())
+        self.model.picker_blocks[self.model.current_player][self.model.get_selected_block()] = rotated_block
+        self.view.paint_transformed_block(rotated_block)
 
     def on_flip(self, event):
+        self.update_selection(event)
+        block_object = self.model.picker_blocks[self.model.current_player][self.model.get_selected_block()]
+        flipped_block = transformer.flip(block_object, self.model.get_selected_block_segment())
+        self.model.picker_blocks[self.model.current_player][self.model.get_selected_block()] = flipped_block
+        self.view.paint_transformed_block(flipped_block)
+
+    def update_selection(self, event):
         tags = self.model.canvas.gettags("current")
-        if self.model.current_player == None:
-            return
         if not tags or not tags[0].split("_")[0] == self.model.current_player.name:
             return
         self.model.mouse_xpos = event.x
         self.model.mouse_ypos = event.y
         self.model.selected_block = tags[0]
         self.model.selected_block_segment = tags[1]
-
-        segments = self.model.canvas.find_withtag(self.model.selected_block)
-        seg = None
-        for segment in segments:
-            if self.model.selected_block_segment in self.model.canvas.gettags(segment):
-                seg = segment
-        coords = self.model.canvas.coords(seg)
-        selected_block_coords = [coords[0], coords[1]]
-        block_object = self.model.picker_blocks[self.model.current_player
-                                                ][self.model.get_selected_block()]
-        flipped_block = transformer.flip(
-            block_object, self.model.get_selected_block_segment())
-        self.model.picker_blocks[self.model.current_player
-                                 ][self.model.get_selected_block()] = flipped_block
-
-        self.model.canvas.delete(self.model.selected_block)
-        block_segment = 0
-        for coord in flipped_block.coordinates:
-            self.model.canvas.create_rectangle(
-                selected_block_coords[0] + coord[1] *
-                constants.PICKER_CELL_SIZE_PX,
-                selected_block_coords[1] + coord[0] *
-                constants.PICKER_CELL_SIZE_PX,
-                selected_block_coords[0] +
-                (coord[1] + 1)*constants.PICKER_CELL_SIZE_PX,
-                selected_block_coords[1] +
-                (coord[0] + 1)*constants.PICKER_CELL_SIZE_PX,
-                fill=self.model.current_player.name,
-                tags=(self.model.current_player.name + "_block_" + str(flipped_block.index),
-                      "block_segment_" + str(block_segment), "picker"))
-            block_segment += 1
 
 
 root = tk.Tk()

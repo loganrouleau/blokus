@@ -47,6 +47,26 @@ class View:
                         (row + 1)*constants.CELL_SIZE_PX,
                         fill=constants.Player(int(self.model.tiles[row][col])).name)
 
+    def paint_transformed_block(self, transformed_block):
+        segments = self.model.canvas.find_withtag(self.model.selected_block)
+        seg = None
+        for segment in segments:
+            if self.model.selected_block_segment in self.model.canvas.gettags(segment):
+                seg = segment
+        coords = self.model.canvas.coords(seg)
+        selected_block_coords = [coords[0], coords[1]]
+        self.model.canvas.delete(self.model.selected_block)
+        block_segment = 0
+        for coord in transformed_block.coordinates:
+            self.model.canvas.create_rectangle(
+                selected_block_coords[0] + coord[1] * constants.PICKER_CELL_SIZE_PX,
+                selected_block_coords[1] + coord[0] * constants.PICKER_CELL_SIZE_PX,
+                selected_block_coords[0] + (coord[1] + 1)*constants.PICKER_CELL_SIZE_PX,
+                selected_block_coords[1] + (coord[0] + 1)*constants.PICKER_CELL_SIZE_PX,
+                fill=self.model.current_player.name,
+                tags=(self.model.current_player.name + "_block_" + str(transformed_block.index), "block_segment_" + str(block_segment), "picker"))
+            block_segment += 1
+
     def update_score(self):
         self.model.canvas.itemconfig(self.model.red_score_label, text="Red Score: " + str(self.model.score[0]))
         self.model.canvas.itemconfig(self.model.green_score_label, text="Green Score: " + str(self.model.score[1]))
